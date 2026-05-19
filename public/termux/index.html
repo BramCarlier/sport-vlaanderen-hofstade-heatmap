@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sport Vlaanderen Hofstade Heatmap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="panel">
+            <p class="eyebrow">Sport Vlaanderen Hofstade</p>
+            <h1>Event Heatmap</h1>
+            <p>Android local backend. Data is saved in <code>storage/app/termux-events.json</code>.</p>
+
+            <section class="card">
+                <h2>Map options</h2>
+                <label><input id="toggleHeatmap" type="checkbox" checked> Show heatmap</label>
+                <label><input id="toggleDots" type="checkbox" checked> Show dots</label>
+                <button id="printMapButton" class="secondary" type="button">Print map</button>
+            </section>
+
+            <form id="eventForm" class="card">
+                <h2>Add event</h2>
+                <label>Name <input id="eventName" required placeholder="verdrinking"></label>
+                <label>Latitude <input id="eventLat" type="number" step="0.000001" value="50.986290"></label>
+                <label>Longitude <input id="eventLng" type="number" step="0.000001" value="4.514818"></label>
+                <label>Weight <input id="eventWeight" type="number" min="1" max="10" value="1"></label>
+                <p id="selectedHint">Tap the map to select coordinates.</p>
+                <button type="submit">Add to heatmap</button>
+            </form>
+
+            <section class="card">
+                <h2>Events</h2>
+                <p id="eventCount"></p>
+                <ul id="eventList" class="event-list"></ul>
+                <button id="clearButton" class="danger" type="button">Clear all events</button>
+            </section>
+        </aside>
+
+        <main>
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
