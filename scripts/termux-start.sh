@@ -4,11 +4,6 @@ set -e
 
 APP_DIR="$HOME/heatmap-laravel"
 TMP_DIR="$HOME/tmp/heatmap-laravel"
-NGINX_CONF="$TMP_DIR/nginx.conf"
-PHP_FPM_CONF="$TMP_DIR/php-fpm.conf"
-PHP_FPM_PID="$TMP_DIR/php-fpm.pid"
-NGINX_PID="$TMP_DIR/nginx.pid"
-PHP_FPM_SOCK="$TMP_DIR/php-fpm.sock"
 
 cd "$APP_DIR"
 
@@ -28,11 +23,10 @@ require_command() {
 
 require_command php php
 require_command composer composer
-require_command nginx nginx
+require_command node nodejs
 
-if ! command -v php-fpm >/dev/null 2>&1; then
-    echo "php-fpm is not installed or not available. Try: pkg install php-fpm"
-    echo "If Termux says php-fpm is part of php, run: pkg reinstall php"
+if ! command -v php-cgi >/dev/null 2>&1; then
+    echo "php-cgi is not installed. Run: pkg install php-cgi"
     exit 1
 fi
 
@@ -87,91 +81,6 @@ if [ -f package.json ]; then
     fi
 fi
 
-if [ -f "$NGINX_PID" ]; then
-    OLD_NGINX_PID="$(cat "$NGINX_PID" 2>/dev/null || true)"
-    if [ -n "$OLD_NGINX_PID" ]; then
-        kill "$OLD_NGINX_PID" 2>/dev/null || true
-    fi
-fi
-
-if [ -f "$PHP_FPM_PID" ]; then
-    OLD_FPM_PID="$(cat "$PHP_FPM_PID" 2>/dev/null || true)"
-    if [ -n "$OLD_FPM_PID" ]; then
-        kill "$OLD_FPM_PID" 2>/dev/null || true
-    fi
-fi
-
-rm -f "$PHP_FPM_SOCK"
-
-cat > "$PHP_FPM_CONF" <<EOF
-[global]
-pid = $PHP_FPM_PID
-error_log = $TMP_DIR/php-fpm-error.log
-
-[www]
-listen = $PHP_FPM_SOCK
-listen.owner = $(whoami)
-listen.group = $(whoami)
-listen.mode = 0660
-user = $(whoami)
-group = $(whoami)
-pm = ondemand
-pm.max_children = 4
-pm.process_idle_timeout = 10s
-pm.max_requests = 200
-clear_env = no
-catch_workers_output = yes
-php_admin_value[error_log] = $APP_DIR/storage/logs/php-fpm.log
-php_admin_flag[log_errors] = on
-env[APP_ENV] = local
-env[TMPDIR] = $TMPDIR
-EOF
-
-cat > "$NGINX_CONF" <<EOF
-worker_processes 1;
-pid $NGINX_PID;
-error_log $TMP_DIR/nginx-error.log;
-
-events {
-    worker_connections 256;
-}
-
-http {
-    include $PREFIX/etc/nginx/mime.types;
-    default_type application/octet-stream;
-    access_log $TMP_DIR/nginx-access.log;
-    sendfile on;
-
-    server {
-        listen 127.0.0.1:8000;
-        server_name localhost;
-        root $APP_DIR/public;
-        index index.php index.html;
-
-        location / {
-            try_files \$uri \$uri/ /index.php?\$query_string;
-        }
-
-        location ~ \.php$ {
-            include $PREFIX/etc/nginx/fastcgi_params;
-            fastcgi_pass unix:$PHP_FPM_SOCK;
-            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-            fastcgi_param DOCUMENT_ROOT \$document_root;
-        }
-
-        location ~ /\.ht {
-            deny all;
-        }
-    }
-}
-EOF
-
-echo "Starting php-fpm..."
-php-fpm --fpm-config "$PHP_FPM_CONF" --daemonize
-
-echo "Starting nginx..."
-nginx -c "$NGINX_CONF"
-
-echo "Laravel is running at http://127.0.0.1:8000"
-echo "Logs: $TMP_DIR"
-echo "Stop with: scripts/termux-stop.sh"
+echo "Opening Laravel at http://127.0.0.1:8000"
+echo "Press Ctrl+C to stop the server."
+node scripts/termux-server.mjs
