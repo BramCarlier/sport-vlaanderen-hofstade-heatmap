@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 const appDir = resolve(fileURLToPath(new URL('..', import.meta.url)), '..');
 const publicDir = join(appDir, 'public', 'termux');
 const dataFile = join(appDir, 'storage', 'app', 'termux-events.json');
-const host = '127.0.0.1';
-const port = 8000;
+const host = process.env.HOST || '127.0.0.1';
+const port = Number(process.env.PORT || 8000);
 
 const initialEvents = [
   { id: 1, name: 'verdrinking', latitude: 50.98629, longitude: 4.514818, weight: 1 }
@@ -65,7 +65,7 @@ function staticFile(pathname) {
   return file;
 }
 
-createServer(async (request, response) => {
+const server = createServer(async (request, response) => {
   const url = new URL(request.url || '/', 'http://' + request.headers.host);
 
   if (url.pathname === '/api/events' && request.method === 'GET') {
@@ -99,7 +99,19 @@ createServer(async (request, response) => {
 
   response.writeHead(200, { 'Content-Type': mimeTypes[extname(file)] || 'application/octet-stream' });
   createReadStream(file).pipe(response);
-}).listen(port, host, () => {
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error('Port ' + port + ' is already in use.');
+    console.error('Stop the old server or run on another port, for example: PORT=8001 node scripts/termux-node-backend-v2.mjs');
+    process.exit(1);
+  }
+
+  throw error;
+});
+
+server.listen(port, host, () => {
   ensureDataFile();
   console.log('Sport Vlaanderen Hofstade Heatmap is running at http://' + host + ':' + port);
   console.log('Persistent data file: ' + dataFile);
