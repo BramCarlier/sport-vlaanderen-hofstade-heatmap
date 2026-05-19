@@ -32,6 +32,10 @@ class Event extends Resource
         return [
             ID::make()->sortable(),
 
+            Text::make('Open Heatmap', function () {
+                return '<a class="link-default font-bold" href="'.route('heatmap.index').'" target="_blank" rel="noopener">Open Heatmap</a>';
+            })->asHtml()->onlyOnIndex(),
+
             Text::make('Name')
                 ->sortable()
                 ->rules('required', 'max:255'),
