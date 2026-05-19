@@ -3,7 +3,8 @@ import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } 
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const appDir = resolve(fileURLToPath(new URL('..', import.meta.url)), '..');
+const scriptFile = fileURLToPath(import.meta.url);
+const appDir = dirname(dirname(scriptFile));
 const publicDir = join(appDir, 'public', 'termux');
 const dataFile = join(appDir, 'storage', 'app', 'termux-events.json');
 const host = process.env.HOST || '127.0.0.1';
@@ -114,6 +115,8 @@ server.on('error', (error) => {
 server.listen(port, host, () => {
   ensureDataFile();
   console.log('Sport Vlaanderen Hofstade Heatmap is running at http://' + host + ':' + port);
+  console.log('Project root: ' + appDir);
+  console.log('Static files: ' + publicDir);
   console.log('Persistent data file: ' + dataFile);
   console.log('Press Ctrl+C to stop.');
 });
