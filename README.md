@@ -11,16 +11,17 @@ git clone https://github.com/BramCarlier/sport-vlaanderen-hofstade-heatmap.git ~
 cd ~/heatmap-laravel
 ```
 
-Install the basic Termux packages:
+Install the required Termux packages:
 
 ```bash
-pkg update && pkg install php composer git unzip -y
+pkg update && pkg install php php-fpm composer git unzip nginx nodejs -y
+corepack enable
 ```
 
-Make the startup script executable:
+Make the scripts executable:
 
 ```bash
-chmod +x scripts/termux-start.sh
+chmod +x scripts/termux-start.sh scripts/termux-stop.sh
 ```
 
 Start the project:
@@ -35,6 +36,12 @@ Then open this URL on the same Android device:
 http://127.0.0.1:8000
 ```
 
+Stop the project:
+
+```bash
+./scripts/termux-stop.sh
+```
+
 ## What the Termux startup script does
 
 The script:
@@ -47,7 +54,11 @@ The script:
 - Creates `database/database.sqlite`
 - Runs migrations
 - Clears Laravel caches
-- Starts Laravel on `http://127.0.0.1:8000`
+- Installs/builds frontend assets with Yarn when available
+- Starts `php-fpm`
+- Starts `nginx` on `http://127.0.0.1:8000`
+
+This avoids PHP's built-in development server, which can fail on Termux with a lock-file permission error.
 
 ## Laravel Nova
 
@@ -76,4 +87,10 @@ Run the app again:
 
 ```bash
 ./scripts/termux-start.sh
+```
+
+Stop the app:
+
+```bash
+./scripts/termux-stop.sh
 ```
