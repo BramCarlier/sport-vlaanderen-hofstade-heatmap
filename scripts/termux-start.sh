@@ -6,6 +6,13 @@ cd "$HOME/heatmap-laravel"
 
 echo "Starting Sport Vlaanderen Hofstade Heatmap..."
 
+# PHP's built-in development server may try to create a lock/temp file.
+# On Android/Termux, /tmp can be unavailable or not writable, so force a safe temp folder.
+export TMPDIR="$HOME/tmp"
+export TEMP="$TMPDIR"
+export TMP="$TMPDIR"
+mkdir -p "$TMPDIR"
+
 if ! command -v php >/dev/null 2>&1; then
     echo "PHP is not installed. Run: pkg install php"
     exit 1
@@ -52,4 +59,8 @@ echo "Clearing caches..."
 php artisan optimize:clear
 
 echo "Opening Laravel at http://127.0.0.1:8000"
-php artisan serve --host=127.0.0.1 --port=8000
+echo "Press Ctrl+C to stop the server."
+
+# Use Laravel's serve command first. If Termux/PHP still has lock-file issues,
+# fall back to PHP's built-in server with Laravel's public directory.
+php artisan serve --host=127.0.0.1 --port=8000 || php -S 127.0.0.1:8000 -t public
