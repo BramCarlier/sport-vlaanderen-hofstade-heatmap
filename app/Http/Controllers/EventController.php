@@ -3,63 +3,57 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        //
+        return view('heatmap');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function list(): JsonResponse
     {
-        //
+        return response()->json(
+            Event::query()
+                ->latest()
+                ->get(['id', 'name', 'latitude', 'longitude', 'weight', 'notes', 'created_at'])
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'weight' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $event = Event::create([
+            ...$validated,
+            'weight' => $validated['weight'] ?? 1,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json($event, 201);
+        }
+
+        return redirect()->route('heatmap.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Event $event)
+    public function destroy(Event $event): JsonResponse|RedirectResponse
     {
-        //
-    }
+        $event->delete();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Event $event)
-    {
-        //
-    }
+        if (request()->expectsJson()) {
+            return response()->json(['deleted' => true]);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Event $event)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Event $event)
-    {
-        //
+        return redirect()->route('heatmap.index');
     }
 }
